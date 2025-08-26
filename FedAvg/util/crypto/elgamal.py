@@ -1,0 +1,89 @@
+import numpy as np
+from Cryptodome.Hash import SHA256
+from Cryptodome.PublicKey import ECC
+import struct
+from util.crypto import ecchash
+# from VerSum.util.crypto import ecchash
+from ecdsa import ellipticcurve, SECP256k1
+
+def ecc_point_to_ecdsa_point(ecc_point):
+    curve = SECP256k1.curve
+    return ellipticcurve.Point(
+        curve,
+        int(ecc_point.x),
+        int(ecc_point.y)
+    )
+
+def ecc_key_to_ecdsa_privkey(ecc_key):
+    assert ecc_key.has_private(), "Need a private key"
+    d = int(ecc_key.d)
+    return d
+
+
+def ecdsa_point_to_ecc_point(ecdsa_point):
+    return ECC.EccPoint(ecdsa_point.x(), ecdsa_point.y(), curve='P-256')  # or SECP256k1 if using custom curve
+
+# 获取 P-256 的素数 p（只需要做一次）
+P256_P = ecchash.p
+
+def ecc_point_neg(P):
+    """返回 P-256 椭圆曲线点的负值"""
+    return ECC.EccPoint(int(P.x), (-int(P.y)) % P256_P, curve="P-256")
+
+def vector_to_point(vec):
+    """将向量编码到椭圆曲线群上"""
+    hash_input = vec.tobytes()
+    return ecchash.hash_to_curve(hash_input)
+
+def point_to_vector(point):
+    """从椭圆曲线点解码回向量"""
+    hash_output = SHA256.new(
+        int(point.x).to_bytes(32,'big') +
+        int(point.y).to_bytes(32,'big')
+    ).digest()
+    return np.frombuffer(hash_output, dtype=np.float64)
+
+# secp256r1 / P-256 的参数
+p = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
+a = -3
+b = int("5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16)
+
+def float_to_point(val):
+    bval = struct.pack(">d", val)  # float64 -> bytes
+    x = int.from_bytes(bval, 'big')
+
+    while True:
+        rhs = (pow(x, 3, p) + a * x + b) % p  # y^2 = x^3 + ax + b mod p
+        try:
+            y = pow(rhs, (p + 1) // 4, p)  # Tonelli–Shanks for sqrt mod p (p ≡ 3 mod 4)
+            point = ECC.EccPoint(x, y, curve='P-256')
+            return point
+        except ValueError:
+            x += 1  # try next x if not quadratic residue
+
+def point_to_float(point):
+    x_int = int(point.x)
+    b = x_int.to_bytes(8, 'big')  # 8 bytes for float64
+    return struct.unpack(">d", b)[0]
+
+def vector_to_points(vec: np.ndarray):
+    """将浮点数向量编码为 ECC 点列表"""
+    # point = float_to_point(vec[0])
+    # return [point for v in vec]
+    return [float_to_point(v) for v in vec]
+
+def points_to_vector(points: list):
+    """将 ECC 点列表解码为浮点数向量"""
+    floats = [point_to_float(P) for P in points]
+    return np.array(floats, dtype=np.float64)
+
+# vec = np.array([3.14, 2.718, -1.0, 0.0])
+# print("原始向量:", vec)
+#
+# points = vector_to_points(vec)
+# print("映射到曲线上的点:")
+# for pt in points:
+#     print(pt)
+#
+# recovered_vec = points_to_vector(points)
+# print("还原后的向量:", recovered_vec)
