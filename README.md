@@ -12,3 +12,30 @@ It also supports configurable pairwise network latencies.
 EVA protocol works by steps (i.e., round trips). 
 A step includes waiting and processing messages. 
 See more details in our paper.
+
+## EVA: End-to-end Verifiable Secure Aggregation
+The code is in branch `main`.
+
+First enter into folder `EVA`, then enter into folder `pki_files` and run
+```
+python setup_pki.py
+```
+
+Our program has multiple configs.
+```
+-c [protocol name] 
+-n [number of clients (power of 2)]
+-i [number of iterations] 
+-p [parallel or not] 
+-d [debug mode, if True then output info for every agent]
+```
+EVA supports batches of clients with size power of 2, starting from 128,
+e.g., 128, 256, 512.
+
+Example command:
+```
+python abides.py -c eva -n 128 -i 1 -p 1 
+```
+
+If you want to print out information of every agent, add `-d True` to the above command.
+
