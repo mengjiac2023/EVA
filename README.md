@@ -12,63 +12,68 @@ It also supports configurable pairwise network latencies.
 EVA protocol works by steps (i.e., round trips). 
 A step includes waiting and processing messages. 
 See more details in our paper.
+
+## Set Up
+Create an environment with python 3.9.12 and then activate it:
+```bash
+conda create --name evaEnv python=3.9.12
+conda activate evaEnv
+```
+Use pip to install required packages:
+```bash
+pip install -r requirements.txt
+```
+
 ## Pure Summation
-### EVA
+The code for this task is located in the **SumTask** folder.
+
+Our program supports multiple configurations with the following options:
+
+- `-c [protocol name]` : protocol to use (e.g., `eva`, `flamingo`)  
+- `-n [number of clients]` : must be a power of 2  
+- `-i [number of iterations]` : number of iterations  
+- `-p [parallel or not]` : set `1` for parallel, `0` for sequential  
+- `-o [neighborhood size]` : multiplicative factor of `2logn`  
+
 EVA supports batches of clients with size power of 2, starting from 128,
 e.g., 128, 256, 512.
 
-Example command:
-```
-python abides.py -c eva -n 128
-```
-### Flamingo
-And for Flamingo, similar instructions can be run after entering into corresponding folder, that is, flamingo or FedAvg.
+**Examples:**
 
-Example command:
+For **EVA**, run:
+```bash
+python abides.py -c eva -n 128 -i 1
 ```
-python abides.py -c flamingo -n 256
-```
-
-##  ML Application
-Our program has multiple configs.
-```
--c [protocol name] 
--n [number of clients (power of 2)]
-```
-The machine learning model we use in this repository is a multi-layer perceptron classifier (`MLPClassfier` in `sklearn`) that can pull a variety of different datasets from the [pmlb website](https://epistasislab.github.io/pmlb/index.html). Users might wish to implement more complex models themselves.
-
-Beyond the aforementioned configs, we provide machine learning training configs below.
-```
--t [dataset name]
--s [random seed (optional)]
--e [input vector length]
--x [float-as-int encoding constant (optional)]
--y [float-as-int multiplier (optional)]
+For **Flamingo**, run
+```bash
+python abides.py -c flamingo -n 128 -i 1
 ```
 
-Example command: 
-```
-python abides.py -c eva -n 128 -i 5 -p 1 -t mnist 
-```
-### EVA
-EVA supports batches of clients with size power of 2, starting from 128,
-e.g., 128, 256, 512.
 
-Example command:
-```
-python abides.py -c eva -n 128
-```
-### Flamingo and FedAvg
-And for Flamingo and FedAvg, similar instructions can be run after entering into corresponding folder, that is, flamingo or FedAvg.
+##  Machine Learning Applications
+We provide three protocols: **EVA**, **Flamingo**, and **FedAvg**, located in the `eva`, `flamingo`, and `fedavg` folders respectively.
+Each protocol supports the following parameters:
+- `-t [dataset name]` : training dataset  
+- `-c [protocol name]` : protocol to use (e.g., `eva`, `flamingo`)  
+- `-n [number of clients]` : must be a power of 2  
+- `-i [number of iterations]` : number of iterations  
+- `-p [parallel or not]` : set `1` for parallel, `0` for sequential  
+- `-o [neighborhood size]` : multiplicative factor of `2logn`
 
-Example commands:
-```
-python abides.py -c flamingo -n 256
-```
-```
-python abides.py -c fedavg -n 128
-```
+**Examples (using MNIST):**
 
+For **EVA**, enter the `EVA` folder and run:
+```bash
+python abides.py -c eva -t mnist -n 128 -i 3
+```
+For Flamingo, enter the `Flamingo` folder and run:
+```bash
+python abides.py -c flamingo -t mnist -n 128 -i 3
+```
+For FedAvg, enter the `FedAvg` folder and run:
+```bash
+python abides.py -c fedavg -t mnist -n 128 -i 3
+```
 ## Acknowledgement
-We thank authors of [Flamingo](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10179434) for providing an example template of ABIDES framework.
+We thank authors of [Flamingo](https://github.com/eniac/flamingo) for providing an example template of ABIDES framework.
 
