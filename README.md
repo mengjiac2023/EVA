@@ -28,23 +28,23 @@ pip install -r requirements.txt
 The code for this task is located in the **SumTask** folder.
 
 Our program supports multiple configurations with the following options:
-
-- `-c [protocol name]` : protocol to use (e.g., `eva`, `flamingo`)  
-- `-n [number of clients]` : must be a power of 2  
-- `-i [number of iterations]` : number of iterations  
-- `-p [parallel or not]` : set `1` for parallel, `0` for sequential  
-- `-o [neighborhood size]` : multiplicative factor of `2logn`  
-
+```bash
+- c [protocol name] : protocol to use (e.g., eva, flamingo)  
+- n [number of clients] : must be a power of 2  
+- i [number of iterations] : number of iterations  
+- p [parallel or not] : set 1 for parallel, 0 for sequential  
+- o [neighborhood size] : multiplicative factor of 2logn  
+```
 EVA supports batches of clients with size power of 2, starting from 128,
 e.g., 128, 256, 512.
 
 **Examples:**
 
-For **EVA**, run:
+For EVA, run:
 ```bash
 python abides.py -c eva -n 128 -i 1
 ```
-For **Flamingo**, run
+For Flamingo, run
 ```bash
 python abides.py -c flamingo -n 128 -i 1
 ```
@@ -53,16 +53,17 @@ python abides.py -c flamingo -n 128 -i 1
 ##  Machine Learning Applications
 We provide three protocols: **EVA**, **Flamingo**, and **FedAvg**, located in the `eva`, `flamingo`, and `fedavg` folders respectively.
 Each protocol supports the following parameters:
-- `-t [dataset name]` : training dataset  
-- `-c [protocol name]` : protocol to use (e.g., `eva`, `flamingo`)  
-- `-n [number of clients]` : must be a power of 2  
-- `-i [number of iterations]` : number of iterations  
-- `-p [parallel or not]` : set `1` for parallel, `0` for sequential  
-- `-o [neighborhood size]` : multiplicative factor of `2logn`
-
+```bash
+- t [dataset name] : training dataset  
+- c [protocol name] : protocol to use (e.g., eva, flamingo)  
+- n [number of clients] : must be a power of 2  
+- i [number of iterations] : number of iterations  
+- p [parallel or not] : set 1 for parallel, 0 for sequential  
+- o [neighborhood size] : multiplicative factor of 2logn
+```
 **Examples (using MNIST):**
 
-For **EVA**, enter the `EVA` folder and run:
+For EVA, enter the `EVA` folder and run:
 ```bash
 python abides.py -c eva -t mnist -n 128 -i 3
 ```
