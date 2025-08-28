@@ -48,7 +48,7 @@ Beyond the aforementioned configs, we provide machine learning training configs 
 
 Example command: 
 ```
-python abides.py -c flamingo -n 128 -i 5 -p 1 -t mnist 
+python abides.py -c eva -n 128 -i 5 -p 1 -t mnist 
 ```
 ### EVA
 EVA supports batches of clients with size power of 2, starting from 128,
