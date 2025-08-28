@@ -34,5 +34,4 @@ Example command:
 python abides.py -c eva -n 128
 ```
 
-If you want to print out information of every agent, add `-d True` to the above command.
 
