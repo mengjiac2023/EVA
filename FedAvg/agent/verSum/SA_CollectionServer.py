@@ -14,7 +14,6 @@ from util.crypto import ckks
 
 
 class SA_CollectionServer(Agent):
-    # 类常量定义路径
     DEFAULT_PK_PATH = os.path.normpath(
         os.path.join(os.path.dirname(__file__), '../../pki_files/ckks_public.ctx')
     )
@@ -25,18 +24,15 @@ class SA_CollectionServer(Agent):
                  decryption_pk_path=DEFAULT_PK_PATH):
         super().__init__(id, name, type, random_state)
 
-        self.reg_service_id = reg_service_id  # 注册服务ID
-        self.public_board = {}  # 在初始化时添加公告板存储
-        self.private_board = {}  # 在初始化时添加公告板存储
-        # self.cipher_buffer = {}  # 新增：用于暂存收集的密文 {client_id: cipher}
-        # self.expected_clients = 10  # 预设的参与方数量，根据实际情况调整
+        self.reg_service_id = reg_service_id
+        self.public_board = {}
+        self.private_board = {}
         self.client_num = client_num
         self.rerand_cipher = {}
-        # 加载公钥
         self.public_context = ckks.load_context(decryption_pk_path)
 
         self.cipher_registry = {}  # {client_id: cipher_id}
-        self.pending_clients = {}  # {client_id: cipherList} 用于暂存等待注册的客户端
+        self.pending_clients = {}  # {client_id: cipherList}
         self.user_vectors = {}
         self.no_of_iterations = iterations
         # Track the current iteration and round of the protocol.
@@ -138,7 +134,6 @@ class SA_CollectionServer(Agent):
             if msg.body['iteration'] == self.current_iteration:
                 cipherList = msg.body['ciphertext']
                 client_id = msg.body['sender']
-                # 暂存客户端数据
                 self.pending_clients[client_id] = cipherList
 
         elif msg.body['msg'] == "REGISTER_RESPONSE_BATCH":
@@ -173,25 +168,21 @@ class SA_CollectionServer(Agent):
 
         for client_id, cipherList in self.user_vectors.items():
 
-            # 重加密
             rerand_cipherList = cipherList
 
-            proof = None  # 若有证明生成逻辑，请替换这里
+            proof = None
 
             self.private_board[client_id] = cipherList
 
             cipher_id = client_id
             self._update_public_board(cipher_id, cipherList, rerand_cipherList, proof)
 
-        # 清空暂存
         self.pending_clients = {}
         self.cipher_registry = {}
         self.user_vectors = {}
 
 
     def _update_public_board(self, reg_id, original_cipher, rerand_cipher, proof):
-        """更新公有公告板记录"""
-        # 存储格式：{注册ID: (重随机化密文, 证明, 时间戳)}
         self.public_board[reg_id] = {
             'original_cipher' : original_cipher,
             'rerand_cipher': rerand_cipher,
@@ -202,6 +193,5 @@ class SA_CollectionServer(Agent):
 # ======================== UTIL ========================
 
     def recordTime(self, startTime, categoryName):
-        # Accumulate into time log.
         dt_protocol_end = pd.Timestamp('now')
         self.elapsed_time[categoryName] += dt_protocol_end - startTime

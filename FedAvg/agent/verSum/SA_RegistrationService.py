@@ -11,7 +11,7 @@ class SA_RegistrationService(Agent):
         super().__init__(id, name, type, random_state)
         self.private_board = {}  # {cipher_id: original_cipher}
         self.public_board = {}  # {cipher_id: (rerand_cipher, zkp)}
-        self.cipher_registry = {}  # 新增注册记录存储
+        self.cipher_registry = {}
         self.no_of_iterations = iterations
         self.elapsed_time = {'REPORT': pd.Timedelta(0)}
 
@@ -40,12 +40,11 @@ class SA_RegistrationService(Agent):
     def ckks_cipher_list_to_bytes(self, cipher_list):
         data = b""
         for vec in cipher_list:
-            serialized = vec.serialize()  # 返回 bytes 类型
+            serialized = vec.serialize()
             data += serialized
         return data
 
     def registerCipher(self, cipherList):
-        # cipherList 是 CKKSVector 列表
         data = self.ckks_cipher_list_to_bytes(cipherList)
         cipher_hash = SHA256.new(data).digest()
         cipher_id = int.from_bytes(cipher_hash[:4], 'big')  # 截断长度可调
@@ -53,18 +52,10 @@ class SA_RegistrationService(Agent):
 
     def receiveMessage(self, currentTime, msg):
         super().receiveMessage(currentTime, msg)
-        """处理来自收集服务器的注册请求"""
         if msg.body.get('msg') == "REGISTER":
-            # 从消息中提取密文列表
             cipher_list = msg.body['cipher']
-
-            # 生成注册ID
             cipher_id = self.registerCipher(cipher_list)
-
-            # 存储原始密文到私有公告板
             self.private_board[cipher_id] = cipher_list
-
-            # 返回注册响应
             self.sendMessage(msg.body['sender'], Message({
                 "msg": "REGISTER_RESPONSE",
                 "cipher_id": cipher_id,
@@ -72,11 +63,6 @@ class SA_RegistrationService(Agent):
                 "sender": self.id,
             }))
         if msg.body.get('msg') == "REGISTER_BATCH":
-            """
-            msg.body['cipher_batch'] 应该是一个列表，每项是：
-            { 'client_id': X, 'cipher': [CKKSVector, ...] }
-            """
-
             cipher_batch = msg.body['cipher_batch']
             response_list = []
 
@@ -85,8 +71,6 @@ class SA_RegistrationService(Agent):
                 cipher_list = item['cipher']
 
                 cipher_id = self.registerCipher(cipher_list)
-
-                # 存储原始密文到私有公告板
                 self.private_board[cipher_id] = cipher_list
 
                 response_list.append({
@@ -94,10 +78,8 @@ class SA_RegistrationService(Agent):
                     "cipher_id": cipher_id
                 })
 
-            # 批量响应
             self.sendMessage(msg.body['sender'], Message({
                 "msg": "REGISTER_RESPONSE_BATCH",
                 "responses": response_list,
                 "sender": self.id,
             }))
-    # ... 保留现有的ecc_point_list_to_bytes和registerCipher方法 ...

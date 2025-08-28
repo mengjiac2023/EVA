@@ -14,7 +14,6 @@ from util.crypto import ckks
 
 
 class SA_CollectionServer(Agent):
-    # 类常量定义路径
     DEFAULT_PK_PATH = os.path.normpath(
         os.path.join(os.path.dirname(__file__), '../../pki_files/ckks_public.ctx')
     )
@@ -25,18 +24,15 @@ class SA_CollectionServer(Agent):
                  decryption_pk_path=DEFAULT_PK_PATH):
         super().__init__(id, name, type, random_state)
 
-        self.reg_service_id = reg_service_id  # 注册服务ID
-        self.public_board = {}  # 在初始化时添加公告板存储
-        self.private_board = {}  # 在初始化时添加公告板存储
-        # self.cipher_buffer = {}  # 新增：用于暂存收集的密文 {client_id: cipher}
-        # self.expected_clients = 10  # 预设的参与方数量，根据实际情况调整
+        self.reg_service_id = reg_service_id
+        self.public_board = {}
+        self.private_board = {}
         self.client_num = client_num
         self.rerand_cipher = {}
-        # 加载公钥
         self.public_context = ckks.load_context(decryption_pk_path)
 
         self.cipher_registry = {}  # {client_id: cipher_id}
-        self.pending_clients = {}  # {client_id: cipherList} 用于暂存等待注册的客户端
+        self.pending_clients = {}  # {client_id: cipherList}
         self.user_vectors = {}
         self.no_of_iterations = iterations
         # Track the current iteration and round of the protocol.
@@ -147,7 +143,6 @@ class SA_CollectionServer(Agent):
             if msg.body['iteration'] == self.current_iteration:
                 cipherList = msg.body['ciphertext']
                 client_id = msg.body['sender']
-                # 暂存客户端数据
                 self.pending_clients[client_id] = cipherList
 
         elif msg.body['msg'] == "REGISTER_RESPONSE_BATCH":
@@ -178,7 +173,6 @@ class SA_CollectionServer(Agent):
         }))
 
     def _register_cipher(self, client_id, cipherList):
-        # 与注册服务交互获取ID
         self.sendMessage(self.reg_service_id,
                          Message({
                              "msg": "REGISTER",
@@ -189,7 +183,7 @@ class SA_CollectionServer(Agent):
 
     def rerandomize(self, cipherList, sender):
         original_ids = np.arange(1, self.client_num + 1)  # array([1, 2, ..., N])
-        permuted_ids = np.random.permutation(original_ids)  # 打乱后的 ID 列表
+        permuted_ids = np.random.permutation(original_ids)
         r_prime = int.from_bytes(get_random_bytes(32), 'big') % ecchash.n
         id_C = permuted_ids[sender - 1]
         rerand_cipherList = ckks.rerandomize_ckks_vector(self.public_context,cipherList)
@@ -202,67 +196,47 @@ class SA_CollectionServer(Agent):
         original_ids = np.arange(1, self.client_num + 1)
         permuted_ids = np.random.permutation(original_ids)
         print("now accept cipher_register",len(self.cipher_registry),"and",len(self.user_vectors))
-        # 存储乱序映射（可选：便于验证/重构）
         self.permuted_id_map = {orig: perm for orig, perm in zip(original_ids, permuted_ids)}
         first_cipher = list(self.user_vectors.values())[0]
         noise_vector = ckks.noise_ckks_vector(self.public_context,first_cipher)
         for client_id, cipherList in self.user_vectors.items():
-            # 统一使用相同的乱序 ID
             new_id = self.permuted_id_map[client_id]
 
-            # 重加密
             rerand_cipherList = ckks.add_encrypted_vectors(cipherList, noise_vector)
 
-            proof = None  # 若有证明生成逻辑，请替换这里
+            proof = None
 
-            # 存储重加密结果
             self.rerand_cipher[new_id] = rerand_cipherList
             self.private_board[client_id] = cipherList
 
             cipher_id = self.cipher_registry[client_id]
             self._update_public_board(cipher_id, cipherList, rerand_cipherList, proof)
 
-            # 通知客户端处理完成
             self.sendMessage(client_id, Message({
                 "msg": "CIPHER_REGISTERED",
                 "cipher_id": cipher_id
             }))
 
-        # 清空暂存
         self.pending_clients = {}
         self.cipher_registry = {}
         self.user_vectors = {}
 
 
     def _update_public_board(self, reg_id, original_cipher, rerand_cipher, proof):
-        """更新公有公告板记录"""
-        # 存储格式：{注册ID: (重随机化密文, 证明, 时间戳)}
         self.public_board[reg_id] = {
             'original_cipher' : original_cipher,
             'rerand_cipher': rerand_cipher,
             'proof': proof,
         }
-
-        # 记录日志
-        # if __debug__:
-        #     c0, c1 = rerand_cipher
-        #     self.logger.info(f"Updated public board entry {reg_id} "
-        #                     f"with cipher: ({c0.x}, {c0.y}), ({c1.x}, {c1.y})"
-        #                      f"using r_prime: {r_prime}")
-
     def generate_challenge(self, original_cipher, new_c0, new_c1):
         # 生成挑战值，通常使用哈希函数
         hash_input = f"{original_cipher[0].x}{original_cipher[0].y}{original_cipher[1].x}{original_cipher[1].y}{new_c0.x}{new_c0.y}{new_c1.x}{new_c1.y}".encode()
         return int.from_bytes(SHA256.new(hash_input).digest(), 'big') % ecchash.n
 
     def generate_nizk_proof(self, original_cipher, new_c0, new_c1, r_prime):
-        # 这里使用简化的NIZK证明生成逻辑
-        # 实际应用中应使用成熟的密码学库生成完整的NIZK证明
 
-        # 生成随机挑战
         challenge = self.generate_challenge(original_cipher, new_c0, new_c1)
 
-        # 生成响应
         response = r_prime + challenge * int.from_bytes(SHA256.new(f"{original_cipher}".encode()).digest(),
                                                         'big') % ecchash.n
 

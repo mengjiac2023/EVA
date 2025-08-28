@@ -46,8 +46,6 @@ class SA_ClientAgent(Agent):
 
         # Base class init
         super().__init__(id, name, type, random_state)
-
-        # 加载解密服务器公钥
         self.committee_member_idx = None
         self.committee_shared_sk = None
         self.public_context = ckks.load_context('pki_files/ckks_public.ctx')
@@ -190,9 +188,6 @@ class SA_ClientAgent(Agent):
         super().receiveMessage(currentTime, msg)
 
         if msg.body['msg'] == "AGGREGATED_RESULT" and self.current_iteration != 0:
-            # 版本1
-            #self.global_param_vector = msg.body['global_param_vector']
-            #版本2
             self.global_coefs = msg.body['coefs']
             self.global_int = msg.body['ints']
             self.global_n_iter = msg.body['n_iter']
@@ -237,36 +232,15 @@ class SA_ClientAgent(Agent):
     def sendVectors(self, currentTime, collection_server_id=0, encrypted_vector=None):
         dt_protocol_start = pd.Timestamp('now')
 
-        # train local data
-        #mlp = MLPClassifier(batch_size=64,max_iter=1)
-        # mlp = MLPClassifier(
-        #     hidden_layer_sizes=(128, 64),  # 隐藏层结构
-        #     activation='relu',  # 隐藏层用ReLU（与类别数无关）
-        #     solver='adam',  # 优化器
-        #     alpha=0.001,  # 正则化
-        #     batch_size=64,
-        #     learning_rate_init=0.001,
-        #     max_iter=1,  # 每次partial_fit仅1 epoch
-        #     random_state=42
-        #     # 输出层自动使用Softmax（无需设置）
-        # )
-        #print("CURRENT ITERATION")
-        #print(self.current_iteration)
         if self.current_iteration > 1:
-            # 版本1
-            # mlp = MLPClassifier(warm_start=True)
-            # mlp.partial_fit(self.trainX[self.no_of_iterations],self.trainY[self.no_of_iterations],self.classes)
-            # mlp = FedLearning.unflatten_model(mlp, self.global_param_vector)
-            # 版本2
-            #mlp = MLPClassifier(batch_size=64,warm_start=True,max_iter=1)
             mlp = MLPClassifier(
-                hidden_layer_sizes=(200,),  # 隐藏层结构
-                activation='relu',  # 隐藏层用ReLU（与类别数无关）
-                solver='adam',  # 优化器
-                alpha=0.001,  # 正则化
+                hidden_layer_sizes=(200,),
+                activation='relu',
+                solver='adam',
+                alpha=0.001,
                 batch_size=64,
                 learning_rate_init=0.001,
-                max_iter=1,  # 每次partial_fit仅1 epoch
+                max_iter=1,
                 random_state=42,
                 warm_start=True
             )
@@ -284,34 +258,25 @@ class SA_ClientAgent(Agent):
             mlp.out_activation_ = "softmax"
         else:
             mlp = MLPClassifier(
-                hidden_layer_sizes=(200,),  # 隐藏层结构
-                activation='relu',  # 隐藏层用ReLU（与类别数无关）
-                solver='adam',  # 优化器
-                alpha=0.001,  # 正则化
+                hidden_layer_sizes=(200,),
+                activation='relu',
+                solver='adam',
+                alpha=0.001,
                 batch_size=64,
                 learning_rate_init=0.001,
-                max_iter=1,  # 每次partial_fit仅1 epoch
+                max_iter=1,
                 random_state=42
-                # 输出层自动使用Softmax（无需设置）
             )
         # num epochs
         for j in range(5):
             X_shuffled, y_shuffled = shuffle(self.trainX[0], self.trainY[0])
             mlp.partial_fit(X_shuffled, y_shuffled, self.classes)
-            # mlp.partial_fit(self.trainX[self.no_of_iterations],self.trainY[self.no_of_iterations],self.classes)
-        # 版本1
-        #vec = FedLearning.flatten_model(mlp)
-        # 版本2
         vec = FedLearning.flatten_model_with_state(mlp)
-        # 使用解密服务器公钥进行Elgamal加密
-        # print(f"Client {self.id} start enc vector, length is {len(vec)} and top10 is {vec[:20]}")
         encrypted_vector = ckks.encrypt_vector(self.public_context,vec)
         del mlp
-        # print(f"Client {self.id} send vector")
-        # 发送给收集服务器（修改消息类型）
         self.sendMessage(collection_server_id,
                              Message({
-                                 "msg": "ENCRYPTED_VECTOR",  # 新消息类型
+                                 "msg": "ENCRYPTED_VECTOR",
                                  "ciphertext": encrypted_vector,
                                  "iteration": self.current_iteration,
                                  "sender": self.id
@@ -321,14 +286,14 @@ class SA_ClientAgent(Agent):
         dt_protocol_start = pd.Timestamp('now')
         vec = np.ones(self.vector_len, dtype=self.vector_dtype)
         encrypted_vector = ckks.encrypt_vector(self.public_context, vec)
-        # 发送给收集服务器（修改消息类型）
+
         if __debug__:
             client_comp_delay = pd.Timestamp('now') - dt_protocol_start
             self.logger.info(f"client {self.id} computation delay for vector: {client_comp_delay}")
             self.logger.info(f"client {self.id} sends vector at {currentTime + client_comp_delay}")
         self.sendMessage(collection_server_id,
                          Message({
-                             "msg": "ENCRYPTED_VECTOR",  # 新消息类型
+                             "msg": "ENCRYPTED_VECTOR",
                              "ciphertext": encrypted_vector,
                              "iteration": self.current_iteration,
                              "sender": self.id

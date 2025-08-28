@@ -104,7 +104,7 @@ util.silent_mode = not args.verbose
 num_clients = args.num_clients
 
 neighborhood_size = args.neighborhood_size
-#######################################？？？？？？？？？？？？？？？？？？？？？？？？？
+
 round_time = args.round_time
 num_iterations = args.num_iterations
 parallel_mode = args.parallel_mode
@@ -186,14 +186,6 @@ secret_scale = 1000000
 #   the data into the structures expected by the PPFL clients.  For example:
 #   X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.25, random_state = shuffle_seed)
 #
-# if dataset.upper() == "EMNIST":
-#     # X_input, y_input = fetch_openml('EMNIST_Balanced', version=1, return_X_y=True, as_frame=False)
-#     # y_input = y_input.astype(int)
-#     X_input, y_input = fetch_openml('EMNIST_Digits', version=1, return_X_y=True, as_frame=False)
-#     y_input = y_input.astype(int)
-#
-#     # 可选预处理
-#     # X_input = X_input.reshape(X_input.shape[0], -1).astype("float32") / 255.0
 if dataset.upper() == "EMNIST-DIGITS":
     ds = load_dataset("ernestchu/emnist-digits", cache_dir="./hf_cache")
 
@@ -204,16 +196,9 @@ if dataset.upper() == "EMNIST-DIGITS":
     X_test_raw = np.stack([example['image'] for example in ds['test']])
     y_test_raw = np.array([example['label'] for example in ds['test']])
 
-    # 展平并归一化图像
     X_train_raw = X_train_raw.reshape(X_train_raw.shape[0], -1).astype(np.float32) / 255.0
     X_test_raw = X_test_raw.reshape(X_test_raw.shape[0], -1).astype(np.float32) / 255.0
 
-    # 合并训练和测试集（如需统一划分）
-    # X_input = np.concatenate([X_train_raw, X_test_raw])
-    # y_input = np.concatenate([y_train_raw, y_test_raw])
-    # scaler = StandardScaler()
-    # scaler.fit(X_input)
-    # X_input = scaler.transform(X_input)
 
     scaler = StandardScaler()
     scaler.fit(X_train_raw)
@@ -223,24 +208,15 @@ if dataset.upper() == "EMNIST-DIGITS":
     y_test = y_test_raw
 elif dataset.upper() == "EMNIST-BALANCED":
     ds = load_dataset("claudiogsc/emnist_balanced", cache_dir="./hf_cache")
-
-    # 提取图像和标签
     X_train_raw = np.stack([example['image'] for example in ds['train']])
     y_train_raw = np.array([example['label'] for example in ds['train']])
 
     X_test_raw = np.stack([example['image'] for example in ds['test']])
     y_test_raw = np.array([example['label'] for example in ds['test']])
 
-    # 展平并归一化图像
     X_train_raw = X_train_raw.reshape(X_train_raw.shape[0], -1).astype(np.float32) / 255.0
     X_test_raw = X_test_raw.reshape(X_test_raw.shape[0], -1).astype(np.float32) / 255.0
 
-    # 合并训练和测试集（如需统一划分）
-    # X_input = np.concatenate([X_train_raw, X_test_raw])
-    # y_input = np.concatenate([y_train_raw, y_test_raw])
-    # scaler = StandardScaler()
-    # scaler.fit(X_input)
-    # X_input = scaler.transform(X_input)
 
     scaler = StandardScaler()
     scaler.fit(X_train_raw)
@@ -268,7 +244,6 @@ elif dataset.upper() == 'mnist' or dataset.upper() == 'FMNIST':
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
-    # 官方划分：
     X_train, y_train = X[:60000], y[:60000]
     X_test, y_test = X[60000:], y[60000:]
 else:
@@ -288,10 +263,6 @@ else:
 print("input length: ", input_length)
 start_time = time()
 print("START TIME:", start_time)
-# X_train, X_test, y_train, y_test = train_test_split(X_input, y_input,\
-#                                                     test_size=0.25,\
-#                                                     random_state = seed)
-
 nk = floor(X_train.shape[0]/num_clients)
 n = X_train.shape[0]
 

@@ -19,7 +19,6 @@ from util.crypto.secretsharing import HexToHexSecretSharer
 import util.FedLearning as FedLearning
 
 class SA_DecryptionServer(Agent):
-    # 类常量定义路径
     DEFAULT_SK_PATH = os.path.normpath(
         os.path.join(os.path.dirname(__file__), '../../pki_files/ckks_private.ctx')
     )
@@ -40,7 +39,6 @@ class SA_DecryptionServer(Agent):
                  start_time = None,
                  decryption_sk_path=DEFAULT_SK_PATH):
         super().__init__(id, name, type, random_state)
-        # 加载ElGamal私钥
         self.user_committee = {}
         self.committee_threshold = 0
         self.recv_recon_index = {}
@@ -55,10 +53,8 @@ class SA_DecryptionServer(Agent):
         # self.private_context = ckks.load_context(decryption_sk_path)
         self.private_context = None
         self.collection_server = collection_server
-        # 初始化聚合存储
         self.aggregated_vector = None
-        self.vector_len = input_length  # 与客户端协商的向量长度
-        # 新增唤醒间隔配置（单位：秒）
+        self.vector_len = input_length
         self.wakeup_interval = pd.Timedelta('20s')
         self.client_count = 0
 
@@ -148,8 +144,6 @@ class SA_DecryptionServer(Agent):
                     selected = random.sample(all_shares, self.committee_threshold)
                     recovered_hex = HexToHexSecretSharer.recover_secret(selected)
                     recovered_path = bytes.fromhex(recovered_hex).decode()
-                    # Optional: 输出验证
-                    print("✅ 恢复的路径:", recovered_path)
                     self.private_context = ckks.load_context(recovered_path)
 
                     server_comp_delay = pd.Timestamp('now') - dt_protocol_start
@@ -168,36 +162,14 @@ class SA_DecryptionServer(Agent):
     def initFunc(self, currentTime):
         dt_protocol_start = pd.Timestamp('now')
 
-        # Setup committee (decryptors).
-        # self.user_committee = param.choose_committee(param.root_seed,
-        #                                              param.committee_size,
-        #                                              self.num_clients)
-        # self.committee_threshold = int(param.fraction * len(self.user_committee))
-        # # Simulate the Shamir share of SK at each decryptor
-        # hex_secret = self.decryption_sk_path.encode().hex()
-        # sk_shares = HexToHexSecretSharer.split_secret(hex_secret, self.committee_threshold, len(self.user_committee))
-        #
-        # cnt = 0
-        # for id in self.user_committee:
-        #     self.sendMessage(id,
-        #                      Message({"msg": "COMMITTEE_SHARED_SK",
-        #                               "committee_member_idx": cnt + 1,  # the share evaluation x-point starts at 1
-        #                               "sk_share": sk_shares[cnt],
-        #                               }),
-        #                      tag="comm_dec_server")
-        #     cnt += 1
-
         self.current_round = 1
 
     def reconstruction(self, currentTime):
         print(f"[DS] wakeup in iteration {self.current_iteration} at function reconstruction; current time is {currentTime}")
         dt_protocol_start = pd.Timestamp('now')
-
-        # 调用公告板检查
-        public_board = self._fetch_public_board()  # 需要实现公告板获取逻辑
+        public_board = self._fetch_public_board()
         self.checkPublicBoard_V2(public_board)
 
-        # 广播聚合结果给所有客户端
         aggregated_result = self.get_aggregated_result()
         self._broadcast_result(currentTime, aggregated_result)
 
@@ -219,10 +191,7 @@ class SA_DecryptionServer(Agent):
         # self.setWakeup(currentTime + server_comp_delay + param.wt_versum_reconstruction)
 
     def _fetch_public_board(self):
-        """直接访问并清空收集服务器的公告板"""
         public_board = self.collection_server.public_board.copy()
-
-        # 清空收集服务器的公告板
         self.collection_server.public_board = {}
 
         return public_board
@@ -231,8 +200,6 @@ class SA_DecryptionServer(Agent):
         final_sum = result
         print("[DS] final sum:", final_sum)
         self.aggregated_vector = None
-        """向所有客户端广播结果"""
-        # 实际需要实现客户端列表获取逻辑，这里假设有client_ids属性
         for client_id in self.client_ids:
             self.sendMessage(client_id, Message({
                 "msg": "AGGREGATED_RESULT",
@@ -243,30 +210,24 @@ class SA_DecryptionServer(Agent):
 
         rec = self.client_count
         final_sum = result
-        # MLP
         avg_vec = final_sum / rec
         print(len(avg_vec))
-        #版本1
         # mlp = MLPClassifier(max_iter=1, warm_start=True)
         mlp = MLPClassifier(
-            hidden_layer_sizes=(200,),  # 隐藏层结构
-            activation='relu',  # 隐藏层用ReLU（与类别数无关）
-            solver='adam',  # 优化器
-            alpha=0.001,  # 正则化
+            hidden_layer_sizes=(200,),
+            activation='relu',
+            solver='adam',
+            alpha=0.001,
             batch_size=64,
             learning_rate_init=0.001,
-            max_iter=1,  # 每次partial_fit仅1 epoch
+            max_iter=1,
             random_state=42,
             warm_start=True
         )
         mlp.partial_fit(self.X_help, self.y_help, self.classes)
-        #mlp = FedLearning.unflatten_model(mlp, avg_vec)
-        #版本2
         mlp = FedLearning.unflatten_model_with_state(mlp, avg_vec)
         print("[Server] MLP SCORE: ", mlp.score(self.X_test, self.y_test))
         self.aggregated_vector = None
-        """向所有客户端广播结果"""
-        # 实际需要实现客户端列表获取逻辑，这里假设有client_ids属性
         for client_id in self.client_ids:
             self.sendMessage(client_id, Message({
                 "msg": "AGGREGATED_RESULT",
@@ -285,17 +246,15 @@ class SA_DecryptionServer(Agent):
             }))
 
     def verify_rerandomization(self, original_cipher, rerand_cipher, proof,r_prime):
-        """验证重随机化的零知识证明"""
-        # 计算密文差异
+
         delta_c0 = rerand_cipher[0] - original_cipher[0]
         delta_c1 = rerand_cipher[1] - original_cipher[1]
         r=r_prime
 
-        # 验证DLEQ证明
         return DLEQProof.verify(
             proof=proof,
-            g=ECC.EccPoint(ecchash.Gx, ecchash.Gy),  # 椭圆曲线基点
-            h=self.get_public_key(),  # 解密服务器公钥
+            g=ECC.EccPoint(ecchash.Gx, ecchash.Gy),
+            h=self.get_public_key(),
             c0_diff=delta_c0,
             c1_diff=delta_c1
         )
@@ -307,13 +266,9 @@ class SA_DecryptionServer(Agent):
         return ckks.decrypt_vector(self.private_context, cipherList)
 
     def checkPublicBoard(self, public_board):
-        """处理公告板公有部分的记录"""
-        client_count = 0  # 新增客户端计数器
+        client_count = 0
         for record_id, record in public_board.items():
             rerand_cipher = record['rerand_cipher']
-
-            # 验证证明有效性
-            # if self.verify_rerandomization(original_cipher, rerand_cipher, proof,r_prime):
             if 1:
                 decrypted = self.decrypt_vector(rerand_cipher)
                 if self.aggregated_vector is None:
@@ -322,18 +277,13 @@ class SA_DecryptionServer(Agent):
                     self.aggregated_vector = [a + b for a, b in zip(self.aggregated_vector, decrypted)]
                 client_count += 1
         self.aggregated_vector = np.round(np.array(self.aggregated_vector))
-        # 全局平均（新增）
         if client_count > 0:
             self.client_count = client_count
 
     def checkPublicBoard_V2(self, public_board):
-        """处理公告板公有部分的记录"""
-        client_count = 0  # 新增客户端计数器
+        client_count = 0
         for record_id, record in public_board.items():
             rerand_cipher = record['rerand_cipher']
-
-            # 验证证明有效性
-            # if self.verify_rerandomization(original_cipher, rerand_cipher, proof,r_prime):
             if 1:
                 if self.aggregated_vector is None:
                     self.aggregated_vector = rerand_cipher
@@ -341,16 +291,13 @@ class SA_DecryptionServer(Agent):
                     self.aggregated_vector = self.aggregated_vector + rerand_cipher
                 client_count += 1
         self.aggregated_vector = np.array(self.aggregated_vector)
-        # 全局平均（新增）
         if client_count > 0:
             self.client_count = client_count
 
     def get_public_key(self):
-        """生成对应的公钥点"""
         return ECC.EccPoint(ecchash.Gx, ecchash.Gy) * self.decryption_sk.d
 
     def get_aggregated_result(self):
-        """获取当前聚合结果"""
         return self.aggregated_vector.copy() if self.aggregated_vector is not None else None
 
     # ======================== UTIL ========================
