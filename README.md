@@ -9,3 +9,6 @@ We integrate our code into [ABIDES](https://github.com/jpmorganchase/abides-jpmc
 The simulator supports tens of thousands of clients interacting with a server to facilitate transactions (and in our case to compute sums). 
 It also supports configurable pairwise network latencies.
 
+EVA protocol works by steps (i.e., round trips). 
+A step includes waiting and processing messages. 
+See more details in our paper.
