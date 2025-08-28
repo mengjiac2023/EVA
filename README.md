@@ -13,7 +13,7 @@ EVA protocol works by steps (i.e., round trips).
 A step includes waiting and processing messages. 
 See more details in our paper.
 
-## EVA (Pure Summation) 
+##  Pure Summation
 
 
 Our program has multiple configs.
@@ -21,6 +21,7 @@ Our program has multiple configs.
 -c [protocol name] 
 -n [number of clients (power of 2)]
 ```
+### EVA
 EVA supports batches of clients with size power of 2, starting from 128,
 e.g., 128, 256, 512.
 
@@ -28,8 +29,8 @@ Example command:
 ```
 python abides.py -c eva -n 128
 ```
-
-And for Flamingo and FedAvg, similar instructions can be run.
+### Flamingo and FedAvg
+And for Flamingo and FedAvg, similar instructions can be run after entering into corresponding folder, that is, flamingo or FedAvg.
 
 Example commands:
 ```
