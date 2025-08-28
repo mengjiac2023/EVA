@@ -34,4 +34,6 @@ Example command:
 python abides.py -c eva -n 128
 ```
 
+## Acknowledgement
+We thank authors of [Flamingo](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10179434) for providing an example template of ABIDES framework.
 
