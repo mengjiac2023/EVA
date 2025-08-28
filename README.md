@@ -13,13 +13,8 @@ EVA protocol works by steps (i.e., round trips).
 A step includes waiting and processing messages. 
 See more details in our paper.
 
-## EVA: End-to-end Verifiable Secure Aggregation
-The code is in branch `main`.
+## EVA (pure summation) 
 
-First enter into folder `EVA`, then enter into folder `pki_files` and run
-```
-python setup_pki.py
-```
 
 Our program has multiple configs.
 ```
