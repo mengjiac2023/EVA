@@ -13,7 +13,7 @@ EVA protocol works by steps (i.e., round trips).
 A step includes waiting and processing messages. 
 See more details in our paper.
 
-## EVA (pure summation) 
+## EVA ( Pure Summation ) 
 
 
 Our program has multiple configs.
