@@ -13,7 +13,7 @@ EVA protocol works by steps (i.e., round trips).
 A step includes waiting and processing messages. 
 See more details in our paper.
 
-## EVA ( Pure Summation ) 
+## EVA (Pure Summation) 
 
 
 Our program has multiple configs.
@@ -31,7 +31,7 @@ python abides.py -c eva -n 128
 
 And for Flamingo and FedAvg, similar instructions can be run.
 
-Example command:
+Example commands:
 ```
 python abides.py -c flamingo -n 256
 ```
