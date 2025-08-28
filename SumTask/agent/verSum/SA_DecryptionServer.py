@@ -19,7 +19,6 @@ from util.crypto.secretsharing import HexToHexSecretSharer
 import util.FedLearning as FedLearning
 
 class SA_DecryptionServer(Agent):
-    # 类常量定义路径
     DEFAULT_SK_PATH = os.path.normpath(
         os.path.join(os.path.dirname(__file__), '../../pki_files/ckks_private.ctx')
     )
@@ -264,7 +263,7 @@ class SA_DecryptionServer(Agent):
         return ckks.decrypt_vector(self.private_context, cipherList)
 
     def checkPublicBoard(self, public_board):
-        client_count = 0  # 新增客户端计数器
+        client_count = 0
         for record_id, record in public_board.items():
             rerand_cipher = record['rerand_cipher']
 
@@ -318,7 +317,5 @@ class SA_DecryptionServer(Agent):
             **kwargs: Any keyword arguments that the built-in print function accepts.
         """
         print(*args, **kwargs)
-
-# 椭圆曲线参数（需与客户端保持一致）
 ecchash.Gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296
 ecchash.Gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5

@@ -662,13 +662,13 @@ class SA_ServiceAgent(Agent):
 
         #MLP
         mlp = MLPClassifier(
-            hidden_layer_sizes=(200,),  # 隐藏层结构
-            activation='relu',  # 隐藏层用ReLU（与类别数无关）
-            solver='adam',  # 优化器
-            alpha=0.001,  # 正则化
+            hidden_layer_sizes=(200,),
+            activation='relu',
+            solver='adam',
+            alpha=0.001,
             batch_size=64,
             learning_rate_init=0.001,
-            max_iter=1,  # 每次partial_fit仅1 epoch
+            max_iter=1,
             random_state=42,
             warm_start=True
         )

@@ -177,7 +177,7 @@ class SA_CollectionServer(Agent):
                          Message({
                              "msg": "REGISTER",
                              "cipher": cipherList,
-                             "client_id": client_id,  # 新增客户端ID参数
+                             "client_id": client_id,
                              "sender" : self.id
                          }))
 
@@ -229,7 +229,6 @@ class SA_CollectionServer(Agent):
             'proof': proof,
         }
     def generate_challenge(self, original_cipher, new_c0, new_c1):
-        # 生成挑战值，通常使用哈希函数
         hash_input = f"{original_cipher[0].x}{original_cipher[0].y}{original_cipher[1].x}{original_cipher[1].y}{new_c0.x}{new_c0.y}{new_c1.x}{new_c1.y}".encode()
         return int.from_bytes(SHA256.new(hash_input).digest(), 'big') % ecchash.n
 

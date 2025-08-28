@@ -290,7 +290,7 @@ class SA_ClientAgent(Agent):
             self.logger.info(f"client {self.id} sends vector at {currentTime + client_comp_delay}")
         self.sendMessage(collection_server_id,
                          Message({
-                             "msg": "ENCRYPTED_VECTOR",  # 新消息类型
+                             "msg": "ENCRYPTED_VECTOR",
                              "ciphertext": encrypted_vector,
                              "iteration": self.current_iteration,
                              "sender": self.id

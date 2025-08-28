@@ -47,7 +47,7 @@ class SA_RegistrationService(Agent):
     def registerCipher(self, cipherList):
         data = self.ckks_cipher_list_to_bytes(cipherList)
         cipher_hash = SHA256.new(data).digest()
-        cipher_id = int.from_bytes(cipher_hash[:4], 'big')  # 截断长度可调
+        cipher_id = int.from_bytes(cipher_hash[:4], 'big')
         return cipher_id
 
     def receiveMessage(self, currentTime, msg):

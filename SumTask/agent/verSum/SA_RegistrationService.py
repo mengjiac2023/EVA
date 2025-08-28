@@ -40,14 +40,14 @@ class SA_RegistrationService(Agent):
     def ckks_cipher_list_to_bytes(self, cipher_list):
         data = b""
         for vec in cipher_list:
-            serialized = vec.serialize()  # 返回 bytes 类型
+            serialized = vec.serialize()
             data += serialized
         return data
 
     def registerCipher(self, cipherList, truncate=1):
         data = self.ckks_cipher_list_to_bytes(cipherList[:truncate])
         cipher_hash = SHA256.new(data).digest()
-        cipher_id = int.from_bytes(cipher_hash[:4], 'big')  # 截断长度可调
+        cipher_id = int.from_bytes(cipher_hash[:4], 'big')
         return cipher_id
 
     def receiveMessage(self, currentTime, msg):
