@@ -12,10 +12,8 @@ It also supports configurable pairwise network latencies.
 EVA protocol works by steps (i.e., round trips). 
 A step includes waiting and processing messages. 
 See more details in our paper.
-
-##  Pure Summation
-
-
+## Pure Summation
+##  ML Application
 Our program has multiple configs.
 ```
 -c [protocol name] 
