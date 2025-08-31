@@ -173,8 +173,8 @@ secret_scale = 1000000
 
 ### Configure a population of cooperating learning client agents.
 a, b = agent_count, agent_count + num_clients
-
-
+input_length = 80000
+start_time = time()
 ### Configure a service agent.
 agents.extend([ SA_CollectionServer(
                 reg_service_id = b+1,
@@ -197,10 +197,6 @@ for i in range (a, b):
                 debug_mode = debug_mode,
                 random_state = np.random.RandomState(seed=np.random.randint(low=0,high=2**32, dtype='uint64')),
                 input_length= input_length,
-                classes = np.unique(y_train),
-                nk = nk,
-                c = args.constant,
-                m = args.multiplier,
                 ))
 
 agent_types.extend([ "ClientAgent" for i in range(a,b) ])
@@ -272,16 +268,4 @@ results = kernel.runner(agents = agents,
 print ()
 print (f"######## Microbenchmarks ########")
 print (f"Protocol Iterations: {num_iterations}, Clients: {num_clients}, ")
-
-print ()
-print ("Service Agent mean time per iteration (except setup)...")
-print (f"    Report step:         {results['srv_report']}")
-print (f"    Crosscheck step:     {results['srv_crosscheck']}")
-print (f"    Reconstruction step: {results['srv_reconstruction']}")
-print ()
-print ("Client Agent mean time per iteration (except setup)...")
-print (f"    Report step:         {results['clt_report'] / num_clients}")
-print (f"    Crosscheck step:     {results['clt_crosscheck'] / param.committee_size}")
-print (f"    Reconstruction step: {results['clt_reconstruction'] / param.committee_size}")
-print ()
 

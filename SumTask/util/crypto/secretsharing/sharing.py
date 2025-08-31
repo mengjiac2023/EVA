@@ -121,7 +121,7 @@ class SecretSharer():
         for share in shares:
             points.append(share_string_to_point(share, cls.share_charset))
         secret_int = points_to_secret_int(points)
-        secret_string = int_to_charset(secret_int, cls.secret_charset)
+        secret_string = int_to_charset(secret_int[0], cls.secret_charset)
         return secret_string
 
 

@@ -17,7 +17,6 @@ import hashlib
 from util import param
 from util.crypto import ecchash
 from util.crypto import ckks
-import util.FedLearning as FedLearning
 from sklearn.neural_network import MLPClassifier
 from sklearn.utils import shuffle
 
@@ -36,13 +35,8 @@ class SA_ClientAgent(Agent):
                  neighborhood_size=1,
                  debug_mode=0,
                  random_state=None,
-                 X_train=None,
-                 y_train=None,
                  input_length=1024,
-                 classes=None,
-                 nk=10,
-                 c=100,
-                 m=16):
+                 ):
 
         # Base class init
         super().__init__(id, name, type, random_state)
@@ -56,63 +50,10 @@ class SA_ClientAgent(Agent):
         self.no_of_iterations = iterations
         self.current_iteration = 1
         self.current_base = 0
-
-        # MLP inputs
-        self.classes = classes
-        self.nk = nk
-        if (self.nk < len(self.classes)) or (self.nk >= X_train.shape[0]):
-            print("nk is a bad size")
-            exit(0)
-
-        self.global_coefs = None
-        self.global_int = None
-        self.global_n_iter = None
-        self.global_n_layers = None
-        self.global_n_outputs = None
-        self.global_t = None
-        self.global_nic = None
-        self.global_loss = None
-        self.global_best_loss = None
-        self.global_loss_curve = None
-        self.c = c
-        self.m = m
         self.global_param_vector = None
 
         # pick local training data
         self.prng = np.random.Generator(np.random.SFC64())
-        obv_per_iter = self.nk #math.floor(X_train.shape[0]/self.num_clients)
-
-        # self.trainX = [np.empty((obv_per_iter,X_train.shape[1]),dtype=X_train.dtype) for i in range(self.no_of_iterations)]
-        # self.trainY = [np.empty((obv_per_iter,),dtype=y_train.dtype) for i in range(self.no_of_iterations)]
-        self.trainX = []
-        self.trainY = []
-        for i in range(1):
-            #self.input.append(self.prng.integer(input_range));
-            slice = self.prng.choice(range(X_train.shape[0]), size=obv_per_iter, replace = False)
-            perm = self.prng.permutation(range(X_train.shape[0]))
-            p = 0
-            while (len(set(y_train[slice])) < len(self.classes)):
-                if p >= X_train.shape[0]:
-                    print("Dataset does not have the # classes it claims")
-                    exit(0)
-                add = [perm[p]]
-                merge = np.concatenate((slice, add))
-                if (len(set(y_train[merge])) > len(set(y_train[slice]))):
-                    u, c = np.unique(y_train[slice], return_counts=True)
-                    dup = u[c > 1]
-                    rm = np.where(y_train[slice] == dup[0])[0][0]
-                    slice = np.concatenate((add, np.delete(slice, rm)))
-                p += 1
-
-            if (slice.size != obv_per_iter):
-                print("n_k not going to be consistent")
-                exit(0)
-
-            # Pull together the current local training set.
-            self.trainX.append(X_train[slice].copy())
-            self.trainY.append(y_train[slice].copy())
-
-
         # Set logger
         self.logger = logging.getLogger("Log")
         self.logger.setLevel(logging.INFO)
@@ -221,65 +162,6 @@ class SA_ClientAgent(Agent):
     ###################################
     # Round logics
     ###################################
-    def sendVectors(self, currentTime, collection_server_id=0, encrypted_vector=None):
-        dt_protocol_start = pd.Timestamp('now')
-
-
-        #print("CURRENT ITERATION")
-        #print(self.current_iteration)
-        if self.current_iteration > 1:
-            mlp = MLPClassifier(
-                hidden_layer_sizes=(200,),
-                activation='relu',
-                solver='adam',
-                alpha=0.001,
-                batch_size=64,
-                learning_rate_init=0.001,
-                max_iter=1,
-                random_state=42,
-                warm_start=True
-            )
-            mlp.coefs_ = self.global_coefs.copy()
-            mlp.intercepts_ = self.global_int.copy()
-
-            mlp.n_iter_ = self.global_n_iter
-            mlp.n_layers_ = self.global_n_layers
-            mlp.n_outputs_ = self.global_n_outputs
-            mlp.t_ = self.global_t
-            mlp._no_improvement_count = self.global_nic
-            mlp.loss_ = self.global_loss
-            mlp.best_loss_ = self.global_best_loss
-            mlp.loss_curve_ = self.global_loss_curve.copy()
-            mlp.out_activation_ = "softmax"
-        else:
-            mlp = MLPClassifier(
-                hidden_layer_sizes=(200,),
-                activation='relu',
-                solver='adam',
-                alpha=0.001,
-                batch_size=64,
-                learning_rate_init=0.001,
-                max_iter=1,
-                random_state=42
-            )
-        # num epochs
-        for j in range(5):
-            X_shuffled, y_shuffled = shuffle(self.trainX[0], self.trainY[0])
-            mlp.partial_fit(X_shuffled, y_shuffled, self.classes)
-
-        vec = FedLearning.flatten_model_with_state(mlp)
-
-        encrypted_vector = ckks.encrypt_vector(self.public_context,vec)
-        del mlp
-
-        self.sendMessage(collection_server_id,
-                             Message({
-                                 "msg": "ENCRYPTED_VECTOR",
-                                 "ciphertext": encrypted_vector,
-                                 "iteration": self.current_iteration,
-                                 "sender": self.id
-                             }))
-
     def sendVectors_one(self, currentTime, collection_server_id=0, encrypted_vector=None):
         dt_protocol_start = pd.Timestamp('now')
         vec = np.ones(self.vector_len, dtype=self.vector_dtype)

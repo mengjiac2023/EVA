@@ -1,7 +1,6 @@
 from Cryptodome.PublicKey import ECC
 from util.crypto import ecchash
 import struct
-# 用 d=1 构造 ECC 密钥，相当于 pointQ = 1 * G = G
 G_point = ECC.construct(curve='P-256', d=1).pointQ
 
 print("Gx =", G_point.x)
@@ -10,7 +9,6 @@ print(ecchash.Gx)
 print(ecchash.Gy)
 
 
-# secp256r1 / P-256 的参数
 p = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
 a = -3
 b = int("5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16)

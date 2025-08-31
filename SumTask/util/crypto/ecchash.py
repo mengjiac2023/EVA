@@ -304,3 +304,22 @@ if __name__ == "__main__":
         expander=XMDExpander(dst, hashlib.sha256, k))
 
     print(res.x, res.y)
+
+def hash_to_curve(hash_input):
+    dst = test_dst("P256_XMD:SHA-256_SSWU_RO_")
+    expander = XMDExpander(
+        dst=dst,
+        hash_fn=hashlib.sha256,
+        security_param=128
+    )
+
+    point = hash_str_to_curve(
+        msg=hash_input,
+        count=2,
+        modulus=p,
+        degree=m,
+        blen=L,
+        expander=expander
+    )
+
+    return point

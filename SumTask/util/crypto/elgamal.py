@@ -39,7 +39,7 @@ def point_to_vector(point):
     ).digest()
     return np.frombuffer(hash_output, dtype=np.float64)
 
-# secp256r1 / P-256 的参数
+# secp256r1 / P-256
 p = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
 a = -3
 b = int("5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16)
@@ -63,8 +63,6 @@ def point_to_float(point):
     return struct.unpack(">d", b)[0]
 
 def vector_to_points(vec: np.ndarray):
-    # point = float_to_point(vec[0])
-    # return [point for v in vec]
     return [float_to_point(v) for v in vec]
 
 def points_to_vector(points: list):

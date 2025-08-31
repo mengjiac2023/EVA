@@ -16,7 +16,6 @@ from message.Message import Message
 from util import param
 from util.crypto import DLEQProof, ecchash, elgamal, ckks
 from util.crypto.secretsharing import HexToHexSecretSharer
-import util.FedLearning as FedLearning
 
 class SA_DecryptionServer(Agent):
     DEFAULT_SK_PATH = os.path.normpath(
@@ -57,13 +56,6 @@ class SA_DecryptionServer(Agent):
         self.vector_len = input_length
         self.wakeup_interval = pd.Timedelta('20s')
         self.client_count = 0
-
-        # MLP inputs
-        self.classes = classes
-        self.X_test = X_test
-        self.y_test = y_test
-        self.X_help = X_help
-        self.y_help = y_help
         self.c = c
         self.m = m
         self.nk = nk

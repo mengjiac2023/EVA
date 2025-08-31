@@ -306,21 +306,19 @@ if __name__ == "__main__":
     print(res.x, res.y)
 
 def hash_to_curve(hash_input):
-    # 使用标准化的参数配置
     dst = test_dst("P256_XMD:SHA-256_SSWU_RO_")
     expander = XMDExpander(
         dst=dst,
         hash_fn=hashlib.sha256,
-        security_param=128  # 对应NIST P-256的安全参数
+        security_param=128
     )
 
-    # 调用现有的哈希到曲线框架
     point = hash_str_to_curve(
         msg=hash_input,
-        count=2,          # 安全参数要求的最小重复次数
-        modulus=p,        # NIST P-256的素数模数
-        degree=m,         # 域扩展次数（P-256为素域，degree=1）
-        blen=L,          # 字节长度（根据RFC9380建议）
+        count=2,
+        modulus=p,
+        degree=m,
+        blen=L,
         expander=expander
     )
 

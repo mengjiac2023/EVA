@@ -26,3 +26,6 @@ pycryptodomex==3.17.0
 
 scikit-learn
 pmlb
+tenseal
+datasets
+tensorflow

@@ -67,9 +67,8 @@ def federated_training(num_clients=128, num_rounds=20, num_epochs=1):
             local_model.fit(X, y, epochs=num_epochs, verbose=0, batch_size=32)
             local_weights.append(get_model_weights(local_model))
 
-            del local_model  # 节省内存
+            del local_model
 
-        # FedAvg 聚合
         global_weights = average_weights(local_weights)
 
         # 测试

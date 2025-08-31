@@ -25,6 +25,10 @@ wt_google_collection = pd.Timedelta('10s')
 wt_google_crosscheck = pd.Timedelta('3s')
 wt_google_recontruction = pd.Timedelta('2s') 
 
+
+wt_versum_rerandomize = pd.Timedelta('5s')
+wt_versum_report = pd.Timedelta('10s')
+wt_versum_reconstruction = pd.Timedelta('20s')
 # WARNING: 
 # this should be a random seed from beacon service;
 # we use a fixed one for simplicity
