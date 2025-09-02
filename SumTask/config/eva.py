@@ -169,7 +169,8 @@ secret_scale = 1000000
 #
 ### END OF LOAD DATA SECTION
 
-
+agent_types.extend(["ServiceAgent"])
+agent_count += 1
 
 ### Configure a population of cooperating learning client agents.
 a, b = agent_count, agent_count + num_clients
