@@ -169,13 +169,14 @@ secret_scale = 1000000
 #
 ### END OF LOAD DATA SECTION
 
+### Configure a population of cooperating learning client agents.
 agent_types.extend(["ServiceAgent"])
 agent_count += 1
 
 ### Configure a population of cooperating learning client agents.
 a, b = agent_count, agent_count + num_clients
-input_length = 80000
 start_time = time()
+print("START TIME:", start_time)
 ### Configure a service agent.
 agents.extend([ SA_CollectionServer(
                 reg_service_id = b+1,
@@ -184,12 +185,13 @@ agents.extend([ SA_CollectionServer(
                 type = "SA_CollectionServer",
                 random_state = np.random.RandomState(seed=np.random.randint(low=0,high=2**32, dtype='uint64')),
                 client_num =num_clients,
-                iterations=num_iterations) ])
+                iterations = num_iterations) ])
 client_init_start = time()
 
 # Iterate over all client IDs.
 # Client index number starts from 1.
 for i in range (a, b):
+
   agents.append(SA_ClientAgent(id = i,
                 name = "PPFL Client Agent {}".format(i),
                 type = "ClientAgent",
@@ -197,7 +199,6 @@ for i in range (a, b):
                 num_clients = num_clients,
                 debug_mode = debug_mode,
                 random_state = np.random.RandomState(seed=np.random.randint(low=0,high=2**32, dtype='uint64')),
-                input_length= input_length,
                 ))
 
 agent_types.extend([ "ClientAgent" for i in range(a,b) ])
@@ -213,10 +214,9 @@ agents.extend([ SA_DecryptionServer(
                 collection_server = agents[0],
                 random_state = np.random.RandomState(seed=np.random.randint(low=0,high=2**32, dtype='uint64')),
                 client_ids = [*range(a, b)],
-                iterations = num_iterations,
-                input_length = input_length,
                 num_clients = num_clients,
-                start_time = start_time,
+                iterations = num_iterations,
+                start_time=start_time
                 ) ])
 
 agent_types.extend(["SA_RegistrationService"])
@@ -270,3 +270,21 @@ print ()
 print (f"######## Microbenchmarks ########")
 print (f"Protocol Iterations: {num_iterations}, Clients: {num_clients}, ")
 
+print ()
+print ("CS Agent mean time per iteration (except setup)...")
+print (f"    Report step:         {results['cs_report']}")
+print (f"    Rerandomize step:     {results['cs_rerandomize']}")
+print ()
+print ()
+print ("RS Agent mean time per iteration (except setup)...")
+print (f"    Report step:         {results['rs_report']}")
+print ()
+print ("DS Agent mean time per iteration (except setup)...")
+print (f"    Reconstruction step: {results['ds_reconstruction']}")
+print (f"    Resk step: {results['ds_resk']}")
+print (f"    Reconstruction step + Resk step: {results['ds_reconstruction']+results['ds_resk']}")
+print ()
+print ("Client Agent mean time per iteration (except setup)...")
+print (f"    Report step:         {results['clt_report'] / num_clients}")
+print (f"    Reconstruction step:         {results['clt_reconstruction'] / param.committee_size}")
+print ()

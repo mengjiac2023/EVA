@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -27,6 +28,8 @@ class SA_CollectionServer(Agent):
         self.reg_service_id = reg_service_id
         self.public_board = {}
         self.private_board = {}
+        # self.cipher_buffer = {}
+        # self.expected_clients = 10
         self.client_num = client_num
         self.rerand_cipher = {}
         self.public_context = ckks.load_context(decryption_pk_path)
@@ -56,6 +59,9 @@ class SA_CollectionServer(Agent):
         self.elapsed_time = {'REPORT': pd.Timedelta(0),
                              'RERANDOMIZE': pd.Timedelta(0)
                              }
+        self.elapsed_cost = {'REPORT': 0,
+                             'RERANDOMIZE': 0
+                             }
     # Simulation lifecycle messages.
 
     def kernelStarting(self, startTime):
@@ -64,7 +70,8 @@ class SA_CollectionServer(Agent):
         # Initialize custom state properties into which we will accumulate results later.
         self.kernel.custom_state['cs_report'] = pd.Timedelta(0)
         self.kernel.custom_state['cs_rerandomize'] = pd.Timedelta(0)
-
+        self.kernel.custom_state['cs_report_cost'] = 0
+        self.kernel.custom_state['cs_rerandomize_cost'] = 0
         # This agent should have negligible (or no) computation delay until otherwise specified.
         self.setComputationDelay(0)
 
@@ -78,7 +85,10 @@ class SA_CollectionServer(Agent):
             self.elapsed_time['REPORT'] / self.no_of_iterations)
         self.kernel.custom_state['cs_rerandomize'] += (
             self.elapsed_time['RERANDOMIZE'] / self.no_of_iterations)
-
+        self.kernel.custom_state['cs_report_cost'] += (
+            self.elapsed_cost['REPORT'] / self.no_of_iterations)
+        self.kernel.custom_state['cs_rerandomize_cost'] += (
+            self.elapsed_cost['RERANDOMIZE'] / self.no_of_iterations)
         # Allow the base class to perform stopping activities.
         super().kernelStopping()
 
@@ -171,7 +181,16 @@ class SA_CollectionServer(Agent):
             "cipher_batch": cipher_batch,
             "sender": self.id
         }))
-
+        totallength = 0
+        # for item in cipher_batch:
+        #     cipher_list = item["cipher"]
+        #     totallength += ckksvector_list_size_bytes(cipher_list)
+        #     totallength += len(str(item["client_id"]).encode('utf-8'))
+        # self.recordCost(cost=compute_message_body_size({
+        #                     "msg": "REGISTER_BATCH",
+        #                     "sender": self.id
+        #                 })+totallength,
+        #                 categoryName="REPORT")
     def _register_cipher(self, client_id, cipherList):
         self.sendMessage(self.reg_service_id,
                          Message({
@@ -216,6 +235,11 @@ class SA_CollectionServer(Agent):
                 "msg": "CIPHER_REGISTERED",
                 "cipher_id": cipher_id
             }))
+            # self.recordCost(cost=compute_message_body_size({
+            #                     "msg": "CIPHER_REGISTERED",
+            #                     "cipher_id": cipher_id
+            #                 }),
+            #                 categoryName="RERANDOMIZE")
 
         self.pending_clients = {}
         self.cipher_registry = {}
@@ -228,6 +252,7 @@ class SA_CollectionServer(Agent):
             'rerand_cipher': rerand_cipher,
             'proof': proof,
         }
+
     def generate_challenge(self, original_cipher, new_c0, new_c1):
         hash_input = f"{original_cipher[0].x}{original_cipher[0].y}{original_cipher[1].x}{original_cipher[1].y}{new_c0.x}{new_c0.y}{new_c1.x}{new_c1.y}".encode()
         return int.from_bytes(SHA256.new(hash_input).digest(), 'big') % ecchash.n
@@ -253,3 +278,45 @@ class SA_CollectionServer(Agent):
         # Accumulate into time log.
         dt_protocol_end = pd.Timestamp('now')
         self.elapsed_time[categoryName] += dt_protocol_end - startTime
+
+    def recordCost(self, cost, categoryName):
+        self.elapsed_cost[categoryName] += cost
+
+    def agent_print(*args, **kwargs):
+        """
+        Custom print function that adds a [Server] header before printing.
+
+        Args:
+            *args: Any positional arguments that the built-in print function accepts.
+            **kwargs: Any keyword arguments that the built-in print function accepts.
+        """
+        print(*args, **kwargs)
+
+
+def compute_message_body_size(body_dict, unit="B", verbose=False):
+    try:
+        data = pickle.dumps(body_dict)
+        size_bytes = len(data)
+
+        if unit.upper() == "B":
+            size = size_bytes
+        elif unit.upper() == "MB":
+            size = size_bytes / (1024 * 1024)
+        else:
+            size = size_bytes / 1024
+
+        if verbose:
+            print(f"[INFO] Message body size: {size:.2f} {unit.upper()}")
+
+        return size
+
+    except (TypeError, ValueError) as e:
+        print("[ERROR] Message body contains non-serializable data:", e)
+        return -1
+
+def ckksvector_list_size_bytes(ckksvector_list):
+    total_bytes = 0
+    for vec in ckksvector_list:
+        serialized = vec.serialize()
+        total_bytes += len(serialized)
+    return total_bytes
