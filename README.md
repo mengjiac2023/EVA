@@ -42,11 +42,11 @@ e.g., 128, 256, 512.
 
 For EVA, run:
 ```bash
-python abides.py -c eva -n 128 -i 1
+python abides.py -c eva -n 128 -i 5
 ```
 For Flamingo, run
 ```bash
-python abides.py -c flamingo -n 128 -i 1
+python abides.py -c flamingo -n 128 -i 5
 ```
 
 
